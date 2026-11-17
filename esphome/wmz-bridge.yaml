@@ -78,8 +78,15 @@ i2c:
   scan: false
 
 # -- TCP-Bridge ---------------------------------------------------------------
+# stream_server als lokale Kopie (wie bei der Modbus-Bridge), damit sich Aenderungen am
+# GitHub-Original nicht unbemerkt auf den naechsten Build auswirken.
+# Erwartet den Ordner components/stream_server neben dieser YAML
+# (im ioBroker-ESPHome-Adapter: /opt/iobroker/iobroker-data/esphome.0/components/stream_server).
 external_components:
-  - source: github://oxan/esphome-stream-server
+  - source:
+      type: local
+      path: components
+    components: [stream_server]
 
 stream_server:
   uart_id: uart_wmz

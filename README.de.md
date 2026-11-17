@@ -30,7 +30,7 @@ Die Datensätze werden über ihre Bedeutung (VIF) zugeordnet, nicht über feste 
 
 ## ESP-Bridge
 
-- [`esphome/wmz-bridge.yaml`](esphome/wmz-bridge.yaml) flashen (M5Stack Unit PoE P4; für andere Boards Pins/Netzwerk anpassen).
+- [`esphome/wmz-bridge.yaml`](esphome/wmz-bridge.yaml) flashen (M5Stack Unit PoE P4; für andere Boards Pins/Netzwerk anpassen). Die `stream_server`-Komponente wird als lokale Kopie in `components/stream_server` neben der YAML erwartet (derselbe Ordner wie bei der Modbus-Bridge).
 - IR-Kopf (TTL, 3,3 V): ESP-TX `GPIO17` → Eingang des Kopfs, ESP-RX `GPIO16` ← Ausgang des Kopfs.
 - Ab ESPHome 2026.1 enthalten REST-URLs den Entitätsnamen, ältere Versionen die Objekt-ID – der Adapter kann beides.
 - Hat der ESP-Webserver Benutzer/Passwort (Basic Auth), lässt sich das im Adapter eintragen.

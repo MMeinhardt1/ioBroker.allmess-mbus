@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "allmess-mbus",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "news": {
+            "0.1.1": {
+                "en": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "de": "ESPHome-Bridge-Konfiguration nutzt eine lokale Kopie der stream_server-Komponente",
+                "ru": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "pt": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "nl": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "fr": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "it": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "es": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "pl": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "uk": "ESPHome bridge configuration uses a local copy of the stream_server component",
+                "zh-cn": "ESPHome bridge configuration uses a local copy of the stream_server component"
+            },
             "0.1.0": {
                 "en": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
                 "de": "Erstveröffentlichung: Allmess Integral-V UltraLite PRO über optisches M-Bus und ESPHome-Bridge, Wärme je Tag/Monat/Jahr, Schnellabfrage in der Messphase",

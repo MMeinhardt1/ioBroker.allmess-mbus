@@ -30,7 +30,7 @@ Records are assigned by their meaning (VIF), not by fixed bytes, so different sc
 
 ## ESP bridge
 
-- Flash [`esphome/wmz-bridge.yaml`](esphome/wmz-bridge.yaml) (M5Stack Unit PoE P4; adapt pins/network for other boards).
+- Flash [`esphome/wmz-bridge.yaml`](esphome/wmz-bridge.yaml) (M5Stack Unit PoE P4; adapt pins/network for other boards). It expects the `stream_server` component as a local copy in `components/stream_server` next to the YAML (same folder as for the Modbus bridge).
 - IR head (TTL, 3.3 V): ESP TX `GPIO17` → head input, ESP RX `GPIO16` ← head output.
 - ESPHome ≥ 2026.1 uses entity names in REST URLs; older versions use object IDs – the adapter handles both.
 - A web server user/password (basic auth) can be configured in the adapter if the ESP uses one.
@@ -73,6 +73,10 @@ iob add allmess-mbus
 ```
 
 ## Changelog
+
+### 0.1.1 (2026-11-17)
+
+- ESPHome bridge configuration (`esphome/wmz-bridge.yaml`) uses a local copy of the `stream_server` component (`components/stream_server` next to the YAML) instead of fetching it from GitHub on every build
 
 ### 0.1.0 (2026-11-17)
 
