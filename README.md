@@ -78,6 +78,10 @@ iob add allmess-mbus
 
 ## Changelog
 
+### 0.1.3 (2026-11-17)
+
+- Translations of the admin interface (`admin/i18n`) and of title, description and news in `io-package.json` for es, fr, it, nl, pl, pt, ru, uk and zh-cn (previously English text in these languages)
+
 ### 0.1.2 (2026-11-17)
 
 - Bridge monitoring: heartbeat every 30 s via the ESPHome web server (does not wake the meter); `info.connection` is only true if TCP **and** the web server respond
