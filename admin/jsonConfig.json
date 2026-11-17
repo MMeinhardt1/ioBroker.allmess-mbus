@@ -1,0 +1,227 @@
+{
+  "i18n": true,
+  "type": "panel",
+  "items": {
+    "model": {
+      "type": "select",
+      "label": "Model",
+      "options": [
+        {
+          "label": "Allmess Integral-V UltraLite PRO (optisch)",
+          "value": "allmess-ultralite-pro"
+        }
+      ],
+      "xs": 12,
+      "sm": 12,
+      "md": 8,
+      "lg": 8,
+      "xl": 8
+    },
+    "_hdrBridge": {
+      "type": "header",
+      "text": "ESP bridge (ESPHome)",
+      "size": 4,
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
+    },
+    "host": {
+      "type": "text",
+      "label": "IP address / host",
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 6,
+      "xl": 6,
+      "validator": "/^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$/.test(data.host || '') || /^(?=.{1,253}$)(?!\\d+(\\.\\d+)*$)([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(data.host || '')",
+      "validatorErrorText": "Please enter a valid IPv4 address (e.g. 192.168.1.10) or host name",
+      "validatorNoSaveOnError": true
+    },
+    "tcpPort": {
+      "type": "number",
+      "label": "stream_server port",
+      "min": 1,
+      "max": 65535,
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "httpPort": {
+      "type": "number",
+      "label": "Web server port",
+      "min": 1,
+      "max": 65535,
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "selectName": {
+      "type": "text",
+      "label": "Name of the UART format select",
+      "help": "Must match the select name in the ESPHome YAML",
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 6,
+      "xl": 6
+    },
+    "httpUser": {
+      "type": "text",
+      "label": "Web server user (optional)",
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "httpPassword": {
+      "type": "password",
+      "label": "Web server password (optional)",
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "_hdrPoll": {
+      "type": "header",
+      "text": "Polling",
+      "size": 4,
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
+    },
+    "intervalNormal": {
+      "type": "number",
+      "label": "Normal interval (s)",
+      "min": 15,
+      "max": 86400,
+      "help": "Every read-out wakes the meter and costs battery – 15 to 60 minutes is usually enough",
+      "xs": 12,
+      "sm": 12,
+      "md": 4,
+      "lg": 4,
+      "xl": 4
+    },
+    "intervalFast": {
+      "type": "number",
+      "label": "Fast interval (s)",
+      "min": 15,
+      "max": 3600,
+      "help": "Only while the measurement phase is enabled and fast polling is requested",
+      "xs": 12,
+      "sm": 12,
+      "md": 4,
+      "lg": 4,
+      "xl": 4
+    },
+    "fastTriggerState": {
+      "type": "objectId",
+      "label": "Request fast polling while this state is true / > 0 (optional)",
+      "help": "e.g. a heat pump compressor state; alternatively set control.schnellabfrage",
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 8,
+      "lg": 8,
+      "xl": 8
+    },
+    "_hdrProto": {
+      "type": "header",
+      "text": "Optical interface",
+      "size": 4,
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
+    },
+    "wakeupMs": {
+      "type": "number",
+      "label": "Wake-up duration (ms)",
+      "min": 500,
+      "max": 5000,
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "pauseMs": {
+      "type": "number",
+      "label": "Pause after wake-up (ms)",
+      "min": 0,
+      "max": 2000,
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "responseTimeoutMs": {
+      "type": "number",
+      "label": "Response timeout (ms)",
+      "min": 1000,
+      "max": 10000,
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "appReset": {
+      "type": "checkbox",
+      "label": "Send application reset before the request",
+      "help": "The UltraLite PRO only answers after a reset",
+      "xs": 12,
+      "sm": 12,
+      "md": 3,
+      "lg": 3,
+      "xl": 3
+    },
+    "_hdrDiag": {
+      "type": "header",
+      "text": "Diagnostics",
+      "size": 4,
+      "newLine": true,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
+    },
+    "logRawFrames": {
+      "type": "checkbox",
+      "label": "Log every telegram (info)",
+      "help": "The last telegram is always available in info.rawFrame",
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 6,
+      "xl": 6
+    },
+    "createUnknownRecords": {
+      "type": "checkbox",
+      "label": "Create states for unknown records",
+      "help": "Records without assignment are created under 'Weitere' (named by their DIF/VIF)",
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 6,
+      "xl": 6
+    }
+  }
+}

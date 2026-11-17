@@ -1,0 +1,136 @@
+{
+    "common": {
+        "name": "allmess-mbus",
+        "version": "0.1.0",
+        "news": {
+            "0.1.0": {
+                "en": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "de": "Erstveröffentlichung: Allmess Integral-V UltraLite PRO über optisches M-Bus und ESPHome-Bridge, Wärme je Tag/Monat/Jahr, Schnellabfrage in der Messphase",
+                "ru": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "pt": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "nl": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "fr": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "it": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "es": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "pl": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "uk": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase",
+                "zh-cn": "Initial release: Allmess Integral-V UltraLite PRO via optical M-Bus and ESPHome bridge, heat per day/month/year, fast polling during a measurement phase"
+            }
+        },
+        "titleLang": {
+            "en": "Allmess heat meter (optical M-Bus)",
+            "de": "Allmess-Wärmezähler (optisches M-Bus)",
+            "ru": "Allmess heat meter (optical M-Bus)",
+            "pt": "Allmess heat meter (optical M-Bus)",
+            "nl": "Allmess heat meter (optical M-Bus)",
+            "fr": "Allmess heat meter (optical M-Bus)",
+            "it": "Allmess heat meter (optical M-Bus)",
+            "es": "Allmess heat meter (optical M-Bus)",
+            "pl": "Allmess heat meter (optical M-Bus)",
+            "uk": "Allmess heat meter (optical M-Bus)",
+            "zh-cn": "Allmess heat meter (optical M-Bus)"
+        },
+        "desc": {
+            "en": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "de": "Allmess-Wärmezähler (Integral-V UltraLite PRO) über die optische M-Bus-Schnittstelle und eine ESP32-Bridge mit ESPHome",
+            "ru": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "pt": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "nl": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "fr": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "it": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "es": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "pl": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "uk": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome",
+            "zh-cn": "Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESP32 bridge running ESPHome"
+        },
+        "authors": [
+            "MMeinhardt1"
+        ],
+        "keywords": [
+            "allmess",
+            "ultralite",
+            "heat meter",
+            "m-bus",
+            "optical",
+            "esphome"
+        ],
+        "platform": "Javascript/Node.js",
+        "icon": "allmess-mbus.png",
+        "extIcon": "https://raw.githubusercontent.com/MMeinhardt1/ioBroker.allmess-mbus/main/admin/allmess-mbus.png",
+        "enabled": false,
+        "readme": "https://github.com/MMeinhardt1/ioBroker.allmess-mbus/blob/main/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "energy",
+        "compact": true,
+        "adminUI": {
+            "config": "json"
+        },
+        "supportCustoms": false,
+        "tier": 2,
+        "connectionType": "local",
+        "dataSource": "poll",
+        "dependencies": [
+            {
+                "js-controller": ">=6.0.11"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=8.0.0"
+            }
+        ],
+        "licenseInformation": {
+            "license": "MIT",
+            "type": "free"
+        }
+    },
+    "encryptedNative": [
+        "httpPassword"
+    ],
+    "protectedNative": [
+        "httpPassword"
+    ],
+    "native": {
+        "model": "allmess-ultralite-pro",
+        "host": "",
+        "tcpPort": 8888,
+        "httpPort": 80,
+        "selectName": "UART Format",
+        "httpUser": "",
+        "httpPassword": "",
+        "intervalNormal": 1800,
+        "intervalFast": 60,
+        "fastTriggerState": "",
+        "wakeupMs": 2200,
+        "pauseMs": 100,
+        "responseTimeoutMs": 3000,
+        "appReset": true,
+        "logRawFrames": false,
+        "createUnknownRecords": false
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Verbindung zur Bridge",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
+}

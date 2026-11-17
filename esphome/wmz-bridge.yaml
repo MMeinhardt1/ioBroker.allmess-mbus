@@ -1,0 +1,205 @@
+# =============================================================================
+# ESP-Bridge fuer ioBroker.allmess-mbus
+# Optischer IR-Lesekopf (TTL) am Waermezaehler <-> TCP (stream_server)
+# Hardware: M5Stack Unit PoE P4 (ESP32-P4, IP101, PoE) – fuer andere ESP32 nur ethernet/wifi anpassen
+#
+# Der ESP macht nur zwei Dinge:
+#   1. stream_server: reicht die UART des Lesekopfs transparent per TCP durch (2400 Baud)
+#   2. Auswahl "UART Format" (8N1 / 8E1), die der Adapter ueber den Webserver umschaltet:
+#        POST http://<ip>/select/UART%20Format/set?option=8N1
+#      8N1 zum Aufwecken (0x55), 8E1 fuer die M-Bus-Kommunikation.
+# Aufwecken, Anfrage, Dekodierung, Intervalle und Datenpunkte erledigt der Adapter.
+#
+# Getestet mit ESPHome 2026.4 (Namens-URLs ab 2026.1, der Adapter kann auch das alte object_id-Format).
+# =============================================================================
+
+substitutions:
+  device_name: "wmz-bridge"
+  friendly_name: "WMZ-Bridge"
+
+  # --- IR-Lesekopf (TTL, 3,3 V) ---
+  wmz_tx_pin: GPIO17      # ESP TX -> Lesekopf RX/TXD-Eingang (IR-Sendediode)
+  wmz_rx_pin: GPIO16      # ESP RX <- Lesekopf TX/RXD-Ausgang (Fototransistor)
+  stream_port: "8888"     # TCP-Port fuer den Adapter
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-p4
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_SPIRAM: y
+      CONFIG_SPIRAM_MODE_OCT: y
+      CONFIG_SPIRAM_SPEED_80M: y
+  cpu_frequency: 360MHz
+  flash_size: 16MB
+
+# -- Logging ------------------------------------------------------------------
+logger:
+  level: DEBUG
+  baud_rate: 0
+  logs:
+    uart_debug: DEBUG     # empfangene Bytes im Webserver-Log
+    stream_server: INFO
+    select: INFO
+    ethernet: INFO
+    component: WARN
+
+# -- OTA ----------------------------------------------------------------------
+ota:
+  - platform: esphome
+
+# -- Netzwerk -----------------------------------------------------------------
+ethernet:
+  type: IP101
+  use_address: 192.168.178.102
+  mac_address: 80:f1:b2:d2:de:49
+  mdc_pin: GPIO31
+  mdio_pin: GPIO52
+  phy_addr: 1
+  power_pin: GPIO51
+  clk:
+    pin: 50
+    mode: CLK_EXT_IN
+
+# -- Webserver (REST-API fuer den Adapter + Bedienung im Browser) -------------
+web_server:
+  port: 80
+  version: 3
+  local: true
+
+# -- I2C (OLED Display) -------------------------------------------------------
+i2c:
+  sda: GPIO7
+  scl: GPIO8
+  scan: false
+
+# -- TCP-Bridge ---------------------------------------------------------------
+external_components:
+  - source: github://oxan/esphome-stream-server
+
+stream_server:
+  uart_id: uart_wmz
+  port: ${stream_port}
+
+# -- UART zum IR-Lesekopf -----------------------------------------------------
+uart:
+  id: uart_wmz
+  tx_pin: ${wmz_tx_pin}
+  rx_pin: ${wmz_rx_pin}
+  baud_rate: 2400
+  data_bits: 8
+  parity: EVEN
+  stop_bits: 1
+  rx_buffer_size: 512
+  debug:
+    direction: RX
+    dummy_receiver: false
+    after:
+      timeout: 100ms
+    sequence:
+      - lambda: UARTDebug::log_hex(direction, bytes, ' ');
+      - lambda: |-
+          id(uart_rx_led).turn_on();
+          id(uart_last_rx) = millis();
+      - delay: 100ms
+      - lambda: |-
+          id(uart_rx_led).turn_off();
+
+# -- Umschaltbares Zeichenformat (vom Adapter gesteuert) ----------------------
+# Der Name "UART Format" muss mit der Adapter-Einstellung uebereinstimmen.
+select:
+  - platform: template
+    id: uart_format
+    name: "UART Format"
+    options: ["8E1", "8N1"]
+    initial_option: "8E1"
+    optimistic: true
+    restore_value: false        # nach einem Neustart immer 8E1
+    set_action:
+      - lambda: |-
+          const bool n1 = (x == "8N1");
+          id(uart_wmz).set_parity(n1 ? esphome::uart::UART_CONFIG_PARITY_NONE
+                                     : esphome::uart::UART_CONFIG_PARITY_EVEN);
+          id(uart_wmz).load_settings(false);
+          ESP_LOGI("bridge", "UART-Format: %s", n1 ? "8N1" : "8E1");
+
+binary_sensor:
+  - platform: stream_server
+    connected:
+      name: "Adapter verbunden"
+      id: tcp_client_connected
+
+button:
+  - platform: restart
+    name: "Neustart"
+
+# -- Globale Variablen --------------------------------------------------------
+globals:
+  - id: alive_tick
+    type: bool
+    initial_value: "false"
+  - id: uart_last_rx
+    type: uint32_t
+    initial_value: "0"
+
+# -- OLED Display -------------------------------------------------------------
+font:
+  - file: "gfonts://Roboto Mono"
+    id: font_small
+    size: 12
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    address: 0x3C
+    id: oled
+    update_interval: 750ms
+    lambda: |-
+      it.print(0, 0, id(font_small), "WMZ-Bridge");
+      it.print(110, 0, id(font_small), id(alive_tick) ? "* " : " *");
+      id(alive_tick) = !id(alive_tick);
+      it.line(0, 13, 127, 13);
+      it.print(0, 16, id(font_small), id(tcp_client_connected).state ? "TCP:  verbunden" : "TCP:  getrennt");
+      it.printf(0, 32, id(font_small), "UART: %s", id(uart_format).current_option().c_str());
+      const bool rx = id(uart_last_rx) > 0 && (millis() - id(uart_last_rx)) < 3000;
+      it.print(0, 48, id(font_small), rx ? "Daten empfangen" : "warte");
+
+# -- LED Ausgaenge ------------------------------------------------------------
+output:
+  - platform: gpio
+    pin: GPIO4
+    id: power_led_output
+  - platform: gpio
+    pin: GPIO5
+    id: heartbeat_led_output
+  - platform: gpio
+    pin: GPIO6
+    id: uart_led_output
+
+light:
+  - platform: binary
+    name: "Power LED"
+    id: power_led
+    output: power_led_output
+    restore_mode: ALWAYS_ON
+    internal: true
+  - platform: binary
+    name: "Heartbeat LED"
+    id: heartbeat_led
+    output: heartbeat_led_output
+    internal: true
+  - platform: binary
+    name: "UART RX LED"
+    id: uart_rx_led
+    output: uart_led_output
+    internal: true
+
+interval:
+  - interval: 500ms
+    then:
+      - light.toggle:
+          id: heartbeat_led

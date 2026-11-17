@@ -1,0 +1,135 @@
+name: Test and Release
+# Run this job on all pushes and pull requests
+# as well as tags with a semantic version
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      # normal versions
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      # pre-releases
+      - "v[0-9]+.[0-9]+.[0-9]+-**"
+  pull_request: {}
+# Cancel previous PR/branch runs when a new commit is pushed
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+# npm 11.x bundled with Node.js 22.22.x is missing promise-retry from its
+# bundled deps, which breaks npm publish, npx, and any npm operation that
+# triggers arborist/rebuild. The workaround (replacing npm with npm@10.9.2)
+# is applied in adapter-tests for Linux + Node 22.x only. Jobs using
+# Node 24.x (check-and-lint, deploy) are unaffected and need no workaround.
+jobs:
+  # Performs quick checks before the expensive test runs
+  check-and-lint:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+      - uses: ioBroker/testing-action-check@v2
+        with:
+          node-version: '24.x'
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
+          lint: true
+  # Runs adapter tests on all supported node versions and OSes
+  adapter-tests:
+    needs: [check-and-lint]
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Replace broken npm with npm@10 (Linux + Node 22.x only)
+        if: runner.os == 'Linux' && matrix.node-version == '22.x'
+        run: |
+          NPM_GLOBAL="$(dirname $(dirname $(which npm)))/lib/node_modules/npm"
+          rm -rf "$NPM_GLOBAL" && mkdir -p "$NPM_GLOBAL"
+          curl -fsSL "https://registry.npmjs.org/npm/-/npm-10.9.2.tgz" \
+            | tar xz --strip-components=1 -C "$NPM_GLOBAL"
+          echo "npm version: $(npm --version)"
+      - uses: ioBroker/testing-action-adapter@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          os: ${{ matrix.os }}
+
+  # Creates the GitHub release (and its tag v<version>) automatically:
+  # - after a successful push to main whose package.json version has no release yet, or
+  # - when a version tag (e.g. v0.2.0) is pushed by hand.
+  # Publishing to npm is intentionally not part of this workflow – the adapters are installed from GitHub.
+  deploy:
+    needs: [check-and-lint, adapter-tests]
+    if: |
+      contains(github.event.head_commit.message, '[skip ci]') == false &&
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    # Write permission is required to create tags and GitHub releases
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Determine version and check consistency
+        id: version
+        run: |
+          PKG="$(node -p "require('./package.json').version")"
+          IO="$(node -p "require('./io-package.json').common.version")"
+          if [ "$PKG" != "$IO" ]; then
+            echo "::error::package.json ($PKG) and io-package.json ($IO) disagree"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "${GITHUB_REF_NAME#v}" != "$PKG" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the package version $PKG"
+            exit 1
+          fi
+          echo "version=$PKG" >> "$GITHUB_OUTPUT"
+          echo "tag=v$PKG" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether the release already exists
+        id: exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" > /dev/null 2>&1; then
+            echo "release=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract release notes from the README changelog
+        if: steps.exists.outputs.release == 'no' || github.ref_type == 'tag'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          awk -v v="$VERSION" '
+            $0 ~ "^### " v "( |$)" { found = 1; next }
+            found && /^##/ { exit }
+            found { print }
+          ' README.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::No changelog entry '### $VERSION' found in README.md"
+            exit 1
+          fi
+          cat release-notes.md
+
+      - name: Create or update the GitHub release
+        if: steps.exists.outputs.release == 'no' || github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if [ "${{ steps.exists.outputs.release }}" = "yes" ]; then
+            gh release edit "$TAG" --title "$TAG" --notes-file release-notes.md
+          else
+            # creates the tag on the tested commit if it does not exist yet
+            gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --target "$GITHUB_SHA"
+          fi
