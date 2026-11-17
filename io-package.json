@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "allmess-mbus",
-        "version": "0.1.1",
+        "version": "0.1.2",
         "news": {
+            "0.1.2": {
+                "en": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "de": "Überwachung der Bridge: Lebenszeichen alle 30 s über den ESPHome-Webserver, Offline-Erkennung in etwa einer Minute, info.offlineSince/offlineReason, Warnung bei Ausfall",
+                "ru": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "pt": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "nl": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "fr": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "it": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "es": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "pl": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "uk": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline",
+                "zh-cn": "Bridge monitoring: 30 s heartbeat via the ESPHome web server, offline detection within about a minute, info.offlineSince/offlineReason, warning when offline"
+            },
             "0.1.1": {
                 "en": "ESPHome bridge configuration uses a local copy of the stream_server component",
                 "de": "ESPHome-Bridge-Konfiguration nutzt eine lokale Kopie der stream_server-Komponente",

@@ -49,6 +49,10 @@ Die Datensätze werden über ihre Bedeutung (VIF) zugeordnet, nicht über feste 
 
 Messwerte werden bei jeder Abfrage geschrieben, der Zeitstempel zeigt also die letzte Ablesung.
 
+## Überwachung der Bridge
+
+Der Adapter prüft die Bridge alle 30 s über ihren Webserver; der Zähler wird dabei nicht geweckt. `info.connection` ist nur `true`, wenn die TCP-Verbindung steht **und** der Webserver antwortet. Ein stromloser oder hängender ESP fällt so in etwa einer Minute auf. Der Adapter schreibt dann einmal eine Warnung ins Log, setzt `info.offlineSince` (Zeitpunkt) und `info.offlineReason` und meldet sich mit einer Info, sobald die Bridge wieder erreichbar ist. Solange die Bridge erreichbar ist, ist `info.offlineSince` leer – ein guter Auslöser für eine Benachrichtigung (z. B. Telegram).
+
 ## Abfrage und Batterie
 
 Jede Abfrage weckt den Zähler und kostet Batterie. Meist gilt das **normale Intervall** (Standard 30 min). Das **schnelle Intervall** (Standard 60 s) gilt nur, solange die **Messphase** `control.messphase` freigegeben ist **und** eine Schnellabfrage angefordert wird – per `control.schnellabfrage` (z. B. aus Node-RED) oder über einen optionalen Auslöser-Datenpunkt in den Instanzeinstellungen (z. B. Verdichter-Status der Wärmepumpe; true oder > 0 = aktiv).

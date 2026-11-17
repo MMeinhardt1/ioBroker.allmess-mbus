@@ -1,6 +1,6 @@
 {
   "name": "iobroker.allmess-mbus",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "ioBroker adapter for Allmess heat meters (Integral-V UltraLite PRO) via the optical M-Bus interface and an ESPHome bridge",
   "author": {
     "name": "MMeinhardt1"

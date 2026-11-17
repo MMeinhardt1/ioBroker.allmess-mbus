@@ -75,6 +75,15 @@ tests.integration(path.join(__dirname, '..'), {
                 await new Promise(r => setTimeout(r, 6_000));
                 assert.strictEqual(sim.state.requests, before + 1);
                 assert.strictEqual(await get('info.reads'), 2);
+                assert.strictEqual(await get('info.offlineSince'), null);
+
+                // ESP faellt aus: sofort offline, Zeitpunkt und Grund gesetzt
+                sim.close();
+                sim = null;
+                await new Promise(r => setTimeout(r, 1_500));
+                assert.strictEqual(await get('info.connection'), false);
+                assert.strictEqual(typeof (await get('info.offlineSince')), 'number');
+                assert.match(String(await get('info.offlineReason')), /TCP/);
             });
         });
     },

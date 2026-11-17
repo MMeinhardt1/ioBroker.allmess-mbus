@@ -21,7 +21,7 @@ const REQ_UD2 = '105BFE5916';
 
 /**
  * @param {{ tcpPort: number, httpPort: number, selectName?: string, legacyUrls?: boolean }} o - Optionen
- * @returns {Promise<{ close: () => void, state: { format: string, awake: boolean, wakeBytes: number, requests: number, formatLog: string[] } }>} Simulator
+ * @returns {Promise<{ close: () => void, closeHttp: () => void, state: { format: string, awake: boolean, wakeBytes: number, requests: number, formatLog: string[] } }>} Simulator
  */
 async function startSimulator(o) {
     const name = o.selectName || 'UART Format';
@@ -52,7 +52,11 @@ async function startSimulator(o) {
         res.end(JSON.stringify({ id: `select/${name}`, value: state.format, state: state.format }));
     });
 
+    /** @type {Set<net.Socket>} */
+    const sockets = new Set();
     const tcpServer = net.createServer(sock => {
+        sockets.add(sock);
+        sock.on('close', () => sockets.delete(sock));
         let buf = Buffer.alloc(0);
         sock.on('data', d => {
             if (state.format === '8N1') {
@@ -94,9 +98,19 @@ async function startSimulator(o) {
     await new Promise(r => tcpServer.listen(o.tcpPort, '127.0.0.1', r));
     return {
         state,
+        /** Bridge "stromlos": Server beenden und offene Verbindungen kappen */
         close: () => {
+            httpServer.closeAllConnections();
             httpServer.close();
+            for (const sk of sockets) {
+                sk.destroy();
+            }
             tcpServer.close();
+        },
+        /** nur der Webserver faellt aus (TCP bleibt offen, wie bei einem haengenden ESP) */
+        closeHttp: () => {
+            httpServer.closeAllConnections();
+            httpServer.close();
         },
     };
 }

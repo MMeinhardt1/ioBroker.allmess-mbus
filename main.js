@@ -70,6 +70,7 @@ class AllmessMbus extends utils.Adapter {
         /** bereits gemeldete unbekannte Datensaetze */
         this._reportedUnknown = new Set();
         this._counters = { reads: 0, failures: 0, consecutive: 0 };
+        this._offlineSince = 0;
 
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
@@ -129,8 +130,8 @@ class AllmessMbus extends utils.Adapter {
             },
             this.log,
         );
-        this.bridge.on('connection', ok => this.setState('info.connection', { val: ok, ack: true }));
-        this.bridge.connect();
+        this.bridge.on('online', (ok, reason) => this._onBridgeOnline(ok, reason));
+        this.bridge.start();
 
         this._nextDue = Date.now() + FIRST_READ_DELAY_MS;
         await this._updateMode();
@@ -172,6 +173,8 @@ class AllmessMbus extends utils.Adapter {
             ['info.intervalS', 'Aktuelles Abfrageintervall', 'number', 'value.interval', 's'],
             ['info.nextRead', 'Nächste geplante Abfrage', 'number', 'date'],
             ['info.rawFrame', 'Letztes Telegramm (hex)', 'string', 'text'],
+            ['info.offlineSince', 'Bridge nicht erreichbar seit (leer = erreichbar)', 'number', 'date'],
+            ['info.offlineReason', 'Grund, warum die Bridge nicht erreichbar ist', 'string', 'text'],
         ];
         for (const [id, name, type, role, unit] of meta) {
             await this._ensureObject(id, { name, type, role, unit, read: true, write: false });
@@ -279,6 +282,34 @@ class AllmessMbus extends utils.Adapter {
     }
 
     /**
+     * Erreichbarkeit der Bridge hat sich geaendert: Datenpunkte setzen, einmalig melden.
+     *
+     * @param {boolean} ok - erreichbar
+     * @param {string} reason - Grund (nur bei offline)
+     */
+    _onBridgeOnline(ok, reason) {
+        const host = `${this.config.host}`;
+        this.setState('info.connection', { val: ok, ack: true });
+        if (ok) {
+            const since = this._offlineSince;
+            this._offlineSince = 0;
+            this._set('info.offlineSince', null);
+            this._set('info.offlineReason', '');
+            if (since) {
+                const min = Math.round((Date.now() - since) / 60_000);
+                this.log.info(`Bridge ${host} wieder erreichbar (war ${min} min offline)`);
+            } else {
+                this.log.info(`Bridge ${host} erreichbar`);
+            }
+            return;
+        }
+        this._offlineSince = Date.now();
+        this._set('info.offlineSince', this._offlineSince);
+        this._set('info.offlineReason', reason);
+        this.log.warn(`Bridge ${host} nicht erreichbar: ${reason}`);
+    }
+
+    /**
      * Startwerte der Verbrauchsstatistik aus den eigenen Datenpunkten lesen.
      */
     async _restoreStatistics() {
@@ -350,7 +381,7 @@ class AllmessMbus extends utils.Adapter {
      * Pruefen, ob eine Abfrage faellig ist.
      */
     _checkDue() {
-        if (this._stopped || this._busy || !this.bridge || !this.bridge.connected) {
+        if (this._stopped || this._busy || !this.bridge || !this.bridge.online) {
             return;
         }
         if (Date.now() >= this._nextDue) {
@@ -522,7 +553,7 @@ class AllmessMbus extends utils.Adapter {
             if (state.val) {
                 if (this._busy) {
                     this.log.info('Abfrage läuft bereits');
-                } else if (!this.bridge || !this.bridge.connected) {
+                } else if (!this.bridge || !this.bridge.online) {
                     this.log.warn('Auslesen nicht möglich: keine Verbindung zur Bridge');
                 } else {
                     this._read().catch(e => this.log.error(`Abfrage: ${e.message}`));

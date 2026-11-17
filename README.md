@@ -49,6 +49,10 @@ Records are assigned by their meaning (VIF), not by fixed bytes, so different sc
 
 Data point names are in German. Measured values are written on every read, so the timestamp shows the time of the last reading.
 
+## Bridge monitoring
+
+The adapter checks the bridge every 30 s via its web server; this does not wake the meter. `info.connection` is only `true` if the TCP connection is up **and** the web server answers. A powered-off or hung ESP is detected within about a minute. The adapter then logs one warning, sets `info.offlineSince` (timestamp) and `info.offlineReason`, and logs an info message once the bridge is back. `info.offlineSince` is empty while the bridge is reachable – a good trigger for a notification (e.g. Telegram).
+
 ## Polling and battery
 
 Every read-out wakes the meter and costs battery. The **normal interval** (default 30 min) applies most of the time. The **fast interval** (default 60 s) is only used while the **measurement phase** `control.messphase` is enabled **and** fast polling is requested – either by `control.schnellabfrage` (e.g. from Node-RED) or by an optional trigger state in the instance settings (e.g. the heat pump's compressor state; true or > 0 = active).
@@ -73,6 +77,12 @@ iob add allmess-mbus
 ```
 
 ## Changelog
+
+### 0.1.2 (2026-11-17)
+
+- Bridge monitoring: heartbeat every 30 s via the ESPHome web server (does not wake the meter); `info.connection` is only true if TCP **and** the web server respond
+- A powered-off or hung ESP is detected within about a minute (previously only via TCP keepalive after ~10 min); the TCP connection is then closed and rebuilt
+- New states `info.offlineSince` and `info.offlineReason`; one warning when the bridge goes offline, one info message when it is back
 
 ### 0.1.1 (2026-11-17)
 

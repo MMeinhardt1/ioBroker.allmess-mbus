@@ -163,6 +163,114 @@ describe('Bridge gegen Simulator', function () {
     });
 });
 
+describe('Erreichbarkeit der Bridge', function () {
+    this.timeout(20_000);
+    const log = { debug: () => {}, info: () => {}, warn: () => {} };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    /**
+     * Auf ein online-Ereignis warten.
+     *
+     * @param {import('../lib/bridge').Bridge} b - Bridge
+     * @param {boolean} want - erwarteter Zustand
+     * @returns {Promise<string>} Grund
+     */
+    function next(b, want) {
+        return new Promise((resolve, reject) => {
+            const t = setTimeout(() => reject(new Error(`kein online=${want}`)), 8_000);
+            const h = (ok, reason) => {
+                if (ok === want) {
+                    clearTimeout(t);
+                    b.off('online', h);
+                    resolve(reason);
+                }
+            };
+            b.on('online', h);
+        });
+    }
+
+    it('erkennt Ausfall und Rueckkehr (TCP getrennt)', async () => {
+        let sim = await startSimulator({ tcpPort: 15720, httpPort: 15721 });
+        const b = new Bridge(
+            {
+                host: '127.0.0.1',
+                tcpPort: 15720,
+                httpPort: 15721,
+                selectName: 'UART Format',
+                heartbeatMs: 200,
+                reconnectMs: 200,
+            },
+            log,
+        );
+        try {
+            const up = next(b, true);
+            b.start();
+            await up;
+            assert.strictEqual(b.online, true);
+            const down = next(b, false);
+            sim.close();
+            assert.match(await down, /TCP/);
+            await wait(300);
+            const back = next(b, true);
+            sim = await startSimulator({ tcpPort: 15720, httpPort: 15721 });
+            await back;
+        } finally {
+            await b.close();
+            sim.close();
+        }
+    });
+
+    it('erkennt einen haengenden ESP (TCP offen, Webserver antwortet nicht)', async () => {
+        const sim = await startSimulator({ tcpPort: 15722, httpPort: 15723 });
+        const b = new Bridge(
+            {
+                host: '127.0.0.1',
+                tcpPort: 15722,
+                httpPort: 15723,
+                selectName: 'UART Format',
+                heartbeatMs: 200,
+                reconnectMs: 5_000,
+            },
+            log,
+        );
+        try {
+            const up = next(b, true);
+            b.start();
+            await up;
+            const down = next(b, false);
+            sim.closeHttp();
+            assert.match(await down, /Webserver/);
+            await wait(100);
+            assert.strictEqual(b.connected, false, 'TCP-Socket wird aktiv geschlossen');
+        } finally {
+            await b.close();
+            sim.close();
+        }
+    });
+
+    it('meldet offline, wenn die Bridge beim Start nicht erreichbar ist', async () => {
+        const b = new Bridge(
+            {
+                host: '127.0.0.1',
+                tcpPort: 15724,
+                httpPort: 15725,
+                selectName: 'UART Format',
+                heartbeatMs: 200,
+                reconnectMs: 200,
+            },
+            log,
+        );
+        try {
+            const down = next(b, false);
+            b.start();
+            await down;
+            assert.strictEqual(b.online, false);
+        } finally {
+            await b.close();
+        }
+    });
+});
+
 describe('Waermestatistik', () => {
     it('heute/gestern', () => {
         const out = {};
